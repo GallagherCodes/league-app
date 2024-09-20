@@ -6,50 +6,51 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { z } from "zod";
-import { userInfoSchema } from "@/zod/schemas";
-import { useSession } from "next-auth/react"; // Import useSession for session management
+import { userInfoSchema } from "@/zod/schemas"; // Ensure the schema handles dateOfBirth and phoneNumber
+import { useSession } from "next-auth/react";
 import { useUser } from "@/context/UserContext";
 
 interface EditUserFormProps {
   defaultValues: {
     name: string;
     email: string;
+    dateOfBirth: string;
+    phoneNumber: string;
   };
   onClose: () => void;
 }
 
 export function EditUserForm({ defaultValues, onClose }: EditUserFormProps) {
   const { updateUser } = useUser();
-
-  const { data: session, update: updateSession } = useSession(); // Destructure session and update from useSession
+  const { data: session, update: updateSession } = useSession(); 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Form setup with Zod validation
   const form = useForm({
-    resolver: zodResolver(userInfoSchema), // Validate against Zod schema
+    resolver: zodResolver(userInfoSchema),
     defaultValues,
   });
-
-  const { reset } = form;
 
   const onSubmit = async (values: z.infer<typeof userInfoSchema>) => {
     setIsSubmitting(true);
 
-    // Call your API to update the user info
+    // Call your API to update the user info (dateOfBirth and phoneNumber)
     const res = await fetch("/api/user/update", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(values),
+      body: JSON.stringify({
+        dateOfBirth: values.dateOfBirth,
+        phoneNumber: values.phoneNumber,
+      }),
     });
 
     const data = await res.json();
-    console.log(data)
 
     if (res.ok) {
-      // After the API call, refresh the session data
+      // Update context with the new information
       updateUser(data.user);
-
       onClose(); // Close the modal after submission
     } else {
       console.error("Error updating user:", data.error);
@@ -63,8 +64,8 @@ export function EditUserForm({ defaultValues, onClose }: EditUserFormProps) {
       <div>
         <label htmlFor="name">Name</label>
         <Input
-          {...form.register("name")}
-          placeholder="Enter your name"
+          value={defaultValues.name}
+          readOnly
           id="name"
           className="w-full"
         />
@@ -73,10 +74,31 @@ export function EditUserForm({ defaultValues, onClose }: EditUserFormProps) {
       <div>
         <label htmlFor="email">Email</label>
         <Input
-          {...form.register("email")}
+          value={defaultValues.email}
           type="email"
-          placeholder="Enter your email"
+          readOnly
           id="email"
+          className="w-full"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="dateOfBirth">Date of Birth</label>
+        <Input
+          {...form.register("dateOfBirth")}
+          type="date"
+          placeholder="Enter your date of birth"
+          id="dateOfBirth"
+          className="w-full"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="phoneNumber">Phone Number</label>
+        <Input
+          {...form.register("phoneNumber")}
+          placeholder="Enter your phone number"
+          id="phoneNumber"
           className="w-full"
         />
       </div>

@@ -34,7 +34,9 @@ export const verifyEmailSchema = z.object({
 
 
 export const userInfoSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
+  name: z.string(),
+  email: z.string().email(),
+  dateOfBirth: z.string().optional(), // You can also use z.date() if needed
+  phoneNumber: z.string().optional(),
 });
 

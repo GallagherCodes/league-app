@@ -4,9 +4,13 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useSession } from 'next-auth/react';
 
 interface User {
+  id: string;
   name: string;
   email: string;
   image: string;
+  dateOfBirth?: string;  // New field for date of birth
+  phoneNumber?: string;  // New field for phone number
+  roles?: string[];      // New field for roles
 }
 
 interface UserContextType {
@@ -20,13 +24,21 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const { data: session } = useSession();
   const [user, setUser] = useState<User | null>(null);
 
+  // Function to fetch full user data
+  const fetchUserData = async (userId: string) => {
+    const res = await fetch(`/api/user/${userId}`); // Fetch from your API
+    if (res.ok) {
+      const fullUserData: User = await res.json();
+      setUser(fullUserData);
+    } else {
+      console.error("Failed to fetch user data");
+    }
+  };
+
   useEffect(() => {
     if (session && session.user) {
-      setUser({
-        name: session.user.name || '',
-        email: session.user.email || '',
-        image: session.user.image || ''
-      });
+      // Fetch the full user object using the session's user ID
+      fetchUserData(session.user.id);
     }
   }, [session]);
 
@@ -49,4 +61,3 @@ export const useUser = (): UserContextType => {
   }
   return context;
 };
-

@@ -13,6 +13,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum Role {
+  ADMIN
+  MANAGER
+  PLAYER
+}
+
 model User {
   id            Int      @id @default(autoincrement())
   name          String?
@@ -21,6 +27,20 @@ model User {
   image         String?
   password      String?
   accounts      Account[]
+  dateOfBirth   String?  // New field for date of birth
+  phoneNumber   String?    // New field for phone number
+  roles         Role[]     // New field for roles, an array of the Role enum
+  teamsManaged  Team[]   @relation("ManagerTeams") // Relation to teams managed
+  teamsPlayer   Team[]   @relation("PlayerTeams")  // Relation to teams as player
+}
+
+
+
+model Team {
+  id                 Int          @id @default(autoincrement())
+  name               String
+  managers           User[]       @relation("ManagerTeams")  // Managers with MANAGER role
+  Roster             User[]       @relation("PlayerTeams")   // Registered players
 }
 
 model Account {

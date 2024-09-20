@@ -9,8 +9,13 @@ const prisma = new PrismaClient();
 
 // Define Zod schema to validate the user update input
 const updateUserSchema = z.object({
-  name: z.string().min(1, "Name is required").max(100, "Name is too long"),
-  email: z.string().email("Invalid email address"),
+  dateOfBirth: z
+    .string()
+    .optional()
+    .refine((val) => /^\d{4}-\d{2}-\d{2}$/.test(val), {
+      message: "Invalid date format. Use YYYY-MM-DD.",
+    }), // Validate the date format
+  phoneNumber: z.string().optional(),
 });
 
 export async function POST(req: Request) {
@@ -31,33 +36,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: result.error.errors }, { status: 400 });
     }
 
-    const { name, email } = result.data;
+    const { dateOfBirth, phoneNumber } = result.data;
 
-    // Validate that the email being updated is the same as the session email
-    if (email !== session.user.email) {
-      return NextResponse.json({ error: "You can only update your own account" }, { status: 403 });
-    }
-
-    // Update the user's data
+    // Update the user's data (keeping dateOfBirth as a string)
     const updatedUser = await prisma.user.update({
       where: { email: session.user.email },
-      data: { name, email },
-    });
-
-    // Update the session with the new user data
-    const updatedSession = {
-      ...session,
-      user: {
-        ...session.user,
-        name: updatedUser.name,
-        email: updatedUser.email,
+      data: {
+        dateOfBirth, // Store the dateOfBirth as a string in the DB
+        phoneNumber,
       },
-    };
+    });
 
     return NextResponse.json({
       message: "User updated successfully",
       user: updatedUser,
-      session: updatedSession,
     });
   } catch (error) {
     console.error("Error updating user:", error);
